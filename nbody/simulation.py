@@ -27,8 +27,8 @@ class NBodyServerFactory(WebSocketServerFactory):
 
     def tick(self):
         bodies = [
-            {'x': random.gauss(0.0, 0.5), 'y': random.gauss(0.0, 0.5), 'mass': 10**random.gauss(1.0, 1.0)}
-            for _ in range(10)
+            {'x': random.gauss(0.0, 1.0), 'y': random.gauss(0.0, 1.0), 'mass': 10**random.gauss(0.1, 0.5)}
+            for _ in range(200)
         ]
         message = {'time': time.time(), 'bodies': bodies}
         logger.info('Sending tick: {}'.format(message))
