@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>N-Body</title>
+</head>
+<body>
+    <canvas id="mainView"></canvas>
+    <script>
+        "use strict";
+
+        var bodies = [];
+
+        function setMessageHandler(onmessage) {
+            var ws = new WebSocket("ws://localhost:9000", []);
+            ws.onopen = function(event) {
+                console.log("Websocket connected");
+            };
+            ws.onerror = function(event) {
+                console.log("Websocket error: " + JSON.stringify(event));
+            };
+            ws.onmessage = function(event) {
+                onmessage(ws, event.data);
+            };
+            ws.onclose = function(event) {
+                console.log("Websocket disconnected");
+            };
+        }
+
+
+
+        (function(bodies) {
+            let canvas = document.getElementById("mainView");
+            let ctx = canvas.getContext("2d");
+
+            window.addEventListener("resize", resizeCanvas, false);
+
+            function scale_coord(coord) {
+                return {
+                    x: window.innerWidth/2 * coord.x/4 + window.innerWidth/2,
+                    y: window.innerHeight/2 * coord.y/2 + window.innerHeight/2
+                };
+            }
+
+            function draw() {
+                ctx.fillStyle = "black";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.fillStyle = "white";
+                for(let body of bodies) {
+                    let coord = scale_coord(body);
+                    console.log("Drawing body at " + JSON.stringify(coord));
+                    let size = Math.pow(body.mass, 1 / 3) * 20;
+                    ctx.fillRect(coord.x - size / 2, coord.y - size / 2, size, size);
+                }
+            }
+
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+
+                draw();
+            }
+
+            resizeCanvas();
+
+            setMessageHandler(function(ws, message) {
+                let parsed = JSON.parse(message);
+                bodies = parsed.bodies;
+                console.log('Received tick for time ' + parsed.time);
+                draw();
+            });
+        })(bodies);
+
+
+
+
+
+    </script>
+</body>
+</html>
