@@ -58,6 +58,11 @@ if __name__ == '__main__':
     coro = loop.create_server(factory, '127.0.0.1', 9000)
     server = loop.run_until_complete(coro)
 
-    loop.run_forever()
+    try:
+        loop.run_forever()
+    except KeyboardInterrupt:
+        server.close()
+        loop.close()
+
 
 
