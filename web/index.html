@@ -36,11 +36,11 @@
             window.addEventListener("resize", resizeCanvas, false);
 
             function scale_coord_x(x) {
-                return window.innerWidth / 2 * x / 4 + window.innerWidth / 2;
+                return window.innerWidth / 2 * x / 8 + window.innerWidth / 2;
             }
 
             function scale_coord_y(y) {
-                return window.innerHeight / 2 * y / 4 + window.innerHeight / 2;
+                return window.innerHeight / 2 * y / 8 + window.innerHeight / 2;
             }
 
 
@@ -80,7 +80,7 @@
                     let x = scale_coord_x(bodies[X][i]);
                     let y = scale_coord_y(bodies[Y][i]);
                     ctx.fillStyle = rainbow(bodies.length, bodies[ID][i]);
-                    let size = Math.pow(bodies[M][i], 1 / 3) * 10;
+                    let size = Math.pow(bodies[M][i], 1 / 3) * 2;
                     ctx.beginPath();
                     // TODO: make sure centering is correct
                     ctx.arc(x, y, size, 0, Math.PI*2);
