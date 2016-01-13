@@ -19,15 +19,15 @@ class NBodyServerProtocol(WebSocketServerProtocol):
         self.factory.unregister(self)
 
 
-N = 100
+N = 200
 X = 0
 Y = 1
 DXDT = 2
 DYDT = 3
 M = 4
 ID = 5
-DT = 0.033
-G = -0.01
+DT = 60.0 ** (-1)
+G = -0.001
 
 
 @numba.jit

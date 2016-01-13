@@ -24,6 +24,7 @@
             };
             ws.onclose = function(event) {
                 console.log("Websocket disconnected");
+                setTimeout(function() { setMessageHandler(onmessage); }, 1000);
             };
         }
 
