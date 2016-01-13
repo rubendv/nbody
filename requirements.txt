@@ -1,3 +1,4 @@
 autobahn
 numpy
 numba
+yappi

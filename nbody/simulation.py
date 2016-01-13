@@ -19,14 +19,14 @@ class NBodyServerProtocol(WebSocketServerProtocol):
         self.factory.unregister(self)
 
 
-N = 1000
+N = 100
 X = 0
 Y = 1
 DXDT = 2
 DYDT = 3
 M = 4
 ID = 5
-DT = 0.01
+DT = 0.033
 G = -0.01
 
 
@@ -63,17 +63,20 @@ class NBodyServerFactory(WebSocketServerFactory):
         self.clients = set()
         self.eventloop = eventloop
         self.bodies = np.array([
-            np.random.normal(0.0, 1.0, N), # x
-            np.random.normal(0.0, 1.0, N), # y
+            np.random.uniform(-4.0, 4.0, N), # x
+            np.random.uniform(-4.0, 4.0, N), # y
             np.random.normal(0.0, 0.1, N), # dx/dt
             np.random.normal(0.0, 0.1, N), # dy/dt
             np.random.normal(1.0, 1.0, N), # m
             np.arange(N) # id
         ])
         logger.info('Starting simulation')
+        self.times = []
         self.tick()
 
     def tick(self):
+        self.eventloop.call_later(DT, self.tick)
+        start = time.time()
         message = {'time': time.time(), 'bodies': self.bodies.tolist()}
         logger.debug('Sending message: {}'.format(message))
         forces = calculate_forces(self.bodies)
@@ -81,7 +84,14 @@ class NBodyServerFactory(WebSocketServerFactory):
         self.bodies[[X, Y]] += self.bodies[[DXDT, DYDT]] * DT
 
         self.broadcast(json.dumps(message))
-        self.eventloop.call_later(DT, self.tick)
+        end = time.time()
+        self.times.append(end-start)
+        if(len(self.times) > 100):
+            logger.info('Calculated {} ticks at {} ms/tick'.format(len(self.times), np.mean(self.times)*1000))
+            self.times = []
+            #self.bodies[X] -= np.mean(self.bodies[X])
+            #self.bodies[Y] -= np.mean(self.bodies[Y])
+
 
     def register(self, client):
         self.clients.add(client)
