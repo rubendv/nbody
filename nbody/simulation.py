@@ -27,7 +27,7 @@ DYDT = 3
 M = 4
 ID = 5
 DT = 60.0 ** (-1)
-G = -0.01
+G = -0.001
 
 
 @numba.jit
@@ -42,7 +42,7 @@ def calculate_forces(bodies):
             vector_y = bodies[Y, j] - bodies[Y, i]
             norm = np.sqrt(vector_x**2 + vector_y**2)
             distance_squared = vector_x ** 2 + vector_y ** 2
-            if distance_squared < 0.01:
+            if distance_squared < 0.001:
                 continue
             vector_x /= norm
             vector_y /= norm
