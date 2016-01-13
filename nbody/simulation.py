@@ -19,7 +19,7 @@ class NBodyServerProtocol(WebSocketServerProtocol):
         self.factory.unregister(self)
 
 
-N = 200
+N = 500
 X = 0
 Y = 1
 DXDT = 2
