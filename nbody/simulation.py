@@ -63,10 +63,10 @@ class NBodyServerFactory(WebSocketServerFactory):
         self.clients = set()
         self.eventloop = eventloop
         self.bodies = np.array([
-            np.random.uniform(-4.0, 4.0, N), # x
-            np.random.uniform(-4.0, 4.0, N), # y
-            np.random.normal(0.0, 0.1, N), # dx/dt
-            np.random.normal(0.0, 0.1, N), # dy/dt
+            np.random.uniform(-6.0, 6.0, N), # x
+            np.random.uniform(-6.0, 6.0, N), # y
+            np.zeros(N), # np.random.normal(0.0, 0.1, N), # dx/dt
+            np.zeros(N), # np.random.normal(0.0, 0.1, N), # dy/dt
             np.random.normal(1.0, 1.0, N), # m
             np.arange(N) # id
         ])
