@@ -9,7 +9,7 @@
     <script>
         "use strict";
 
-        var bodies = [];
+        var bodies = [[], [], [], [], [], []];
 
         function setMessageHandler(onmessage) {
             var ws = new WebSocket("ws://localhost:9000", []);
@@ -35,12 +35,14 @@
 
             window.addEventListener("resize", resizeCanvas, false);
 
-            function scale_coord(coord) {
-                return {
-                    x: window.innerWidth/2 * coord.x/4 + window.innerWidth/2,
-                    y: window.innerHeight/2 * coord.y/2 + window.innerHeight/2
-                };
+            function scale_coord_x(x) {
+                return window.innerWidth / 2 * x / 4 + window.innerWidth / 2;
             }
+
+            function scale_coord_y(y) {
+                return window.innerHeight / 2 * y / 4 + window.innerHeight / 2;
+            }
+
 
             function rainbow(numOfSteps, step) {
                 // This function generates vibrant, "evenly spaced" colours (i.e. no clustering). This is ideal for creating easily distinguishable vibrant markers in Google Maps and other apps.
@@ -67,15 +69,21 @@
                 ctx.fillStyle = "black";
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+                let X = 0;
+                let Y = 1;
+                let DXDT = 2;
+                let DYDT = 3;
+                let M = 4;
+                let ID = 5;
 
-                for(let i = 0; i < bodies.length; i++) {
-                    let body = bodies[i];
-                    let coord = scale_coord(body);
-                    ctx.fillStyle = rainbow(bodies.length, i);
-                    let size = Math.pow(body.mass, 1 / 3) * 20;
+                for(let i = 0; i < bodies[ID].length; i++) {
+                    let x = scale_coord_x(bodies[X][i]);
+                    let y = scale_coord_y(bodies[Y][i]);
+                    ctx.fillStyle = rainbow(bodies.length, bodies[ID][i]);
+                    let size = Math.pow(bodies[M][i], 1 / 3) * 10;
                     ctx.beginPath();
                     // TODO: make sure centering is correct
-                    ctx.arc(coord.x, coord.y, size, 0, Math.PI*2);
+                    ctx.arc(x, y, size, 0, Math.PI*2);
                     ctx.fill();
                 }
             }
@@ -92,7 +100,7 @@
             setMessageHandler(function(ws, message) {
                 let parsed = JSON.parse(message);
                 bodies = parsed.bodies;
-                console.log('Received tick for time ' + parsed.time);
+                //console.log('Received tick for time ' + parsed.time);
                 draw();
             });
         })(bodies);

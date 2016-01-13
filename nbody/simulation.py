@@ -1,9 +1,9 @@
 from autobahn.asyncio.websocket import WebSocketServerProtocol, WebSocketServerFactory
 import logging
 import json
-import random
 import asyncio
 import time
+import numpy as np
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -18,22 +18,40 @@ class NBodyServerProtocol(WebSocketServerProtocol):
         self.factory.unregister(self)
 
 
+N = 200
+X = 0
+Y = 1
+DXDT = 2
+DYDT = 3
+M = 4
+ID = 5
+DT = 0.1
+
 class NBodyServerFactory(WebSocketServerFactory):
+
+
     def __init__(self, eventloop, *args, **kwargs):
         super(NBodyServerFactory, self).__init__(*args, **kwargs)
         self.clients = set()
         self.eventloop = eventloop
+        self.bodies = np.array([
+            np.random.normal(0.0, 1.0, N), # x
+            np.random.normal(0.0, 1.0, N), # y
+            np.random.normal(0.0, 0.1, N), # dx/dt
+            np.random.normal(0.0, 0.1, N), # dy/dt
+            10**np.random.normal(0.0, 1.0, N), # m
+            np.arange(N) # id
+        ])
+        logger.info('Starting simulation')
         self.tick()
 
     def tick(self):
-        bodies = [
-            {'x': random.gauss(0.0, 1.0), 'y': random.gauss(0.0, 1.0), 'mass': 10**random.gauss(0.1, 0.5)}
-            for _ in range(200)
-        ]
-        message = {'time': time.time(), 'bodies': bodies}
-        logger.info('Sending tick: {}'.format(message))
+        message = {'time': time.time(), 'bodies': self.bodies.tolist()}
+        logger.debug('Sending message: {}'.format(message))
+        self.bodies[[X, Y]] += self.bodies[[DXDT, DYDT]] * DT
+
         self.broadcast(json.dumps(message))
-        self.eventloop.call_later(1, self.tick)
+        self.eventloop.call_later(DT, self.tick)
 
     def register(self, client):
         self.clients.add(client)
