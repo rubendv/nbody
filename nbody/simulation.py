@@ -27,7 +27,7 @@ DYDT = 3
 M = 4
 ID = 5
 DT = 60.0 ** (-1)
-G = -0.001
+G = -0.01
 
 
 @numba.jit
@@ -86,11 +86,15 @@ class NBodyServerFactory(WebSocketServerFactory):
         self.broadcast(json.dumps(message))
         end = time.time()
         self.times.append(end-start)
-        if(len(self.times) > 100):
+        if(len(self.times) >= 1000):
             logger.info('Calculated {} ticks at {} ms/tick'.format(len(self.times), np.mean(self.times)*1000))
             self.times = []
-            #self.bodies[X] -= np.mean(self.bodies[X])
-            #self.bodies[Y] -= np.mean(self.bodies[Y])
+            mean_x = self.bodies[X].mean()
+            mean_y = self.bodies[Y].mean()
+            if np.abs(mean_x) > 4 or np.abs(mean_y) > 4:
+                logger.info('Recentering to {}, {}'.format(mean_x, mean_y))
+                self.bodies[X] -= mean_x
+                self.bodies[Y] -= mean_y
 
 
     def register(self, client):
