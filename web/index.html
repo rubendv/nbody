@@ -13,6 +13,7 @@
 
         function setMessageHandler(onmessage) {
             var ws = new WebSocket("wss://rubendv.be/nbody-ws", []);
+            ws.binaryType = 'arraybuffer';
             ws.onopen = function(event) {
                 console.log("Websocket connected");
             };
