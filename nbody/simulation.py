@@ -111,13 +111,13 @@ if __name__ == '__main__':
     loop = asyncio.get_event_loop()
     factory = NBodyServerFactory(
         loop,
-        'ws://localhost:9000',
+        'ws://localhost:80',
         debug=True,
         debugCodePaths=False
     )
     factory.protocol = NBodyServerProtocol
 
-    coro = loop.create_server(factory, '127.0.0.1', 9000)
+    coro = loop.create_server(factory, '127.0.0.1', 80)
     server = loop.run_until_complete(coro)
 
     try:

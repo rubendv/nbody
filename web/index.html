@@ -12,7 +12,7 @@
         var bodies = [[], [], [], [], [], []];
 
         function setMessageHandler(onmessage) {
-            var ws = new WebSocket("ws://localhost:9000", []);
+            var ws = new WebSocket("wss://rubendv.be/nbody-ws", []);
             ws.onopen = function(event) {
                 console.log("Websocket connected");
             };
