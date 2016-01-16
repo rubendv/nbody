@@ -6,4 +6,5 @@ RUN apt-get update && \
 COPY requirements.txt /opt/src/requirements.txt
 RUN pip3 install -r /opt/src/requirements.txt
 COPY nbody /opt/src/nbody
+EXPOSE 9000
 CMD ["/usr/bin/python3", "/opt/src/nbody/simulation.py"]

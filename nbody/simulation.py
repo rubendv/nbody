@@ -19,7 +19,7 @@ class NBodyServerProtocol(WebSocketServerProtocol):
         self.factory.unregister(self)
 
 
-N = 500
+N = 200
 X = 0
 Y = 1
 DXDT = 2
@@ -47,8 +47,8 @@ def calculate_forces(bodies):
             vector_x /= norm
             vector_y /= norm
             magnitude = G * bodies[M, i] * bodies[M, j] / distance_squared
-            forces[i, j, X] = magnitude * vector_x / bodies[M, i]
-            forces[i, j, Y] = magnitude * vector_y / bodies[M, i]
+            forces[i, j, X] = magnitude * vector_x / bodies[M, j]
+            forces[i, j, Y] = magnitude * vector_y / bodies[M, j]
 
     total_forces = np.sum(forces, axis=0)
 
@@ -78,7 +78,6 @@ class NBodyServerFactory(WebSocketServerFactory):
         self.eventloop.call_later(DT, self.tick)
         start = time.time()
         message = {'time': time.time(), 'bodies': self.bodies.tolist()}
-        logger.debug('Sending message: {}'.format(message))
         forces = calculate_forces(self.bodies)
         self.bodies[[DXDT, DYDT]] += forces.T * DT
         self.bodies[[X, Y]] += self.bodies[[DXDT, DYDT]] * DT
@@ -111,13 +110,13 @@ if __name__ == '__main__':
     loop = asyncio.get_event_loop()
     factory = NBodyServerFactory(
         loop,
-        'ws://localhost:80',
-        debug=True,
+        'ws://0.0.0.0:9000',
+        debug=False,
         debugCodePaths=False
     )
     factory.protocol = NBodyServerProtocol
 
-    coro = loop.create_server(factory, '127.0.0.1', 80)
+    coro = loop.create_server(factory, '0.0.0.0', 9000)
     server = loop.run_until_complete(coro)
 
     try:
