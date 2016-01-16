@@ -66,16 +66,16 @@
                 return (c);
             }
 
+            let X = 0;
+            let Y = 1;
+            let DXDT = 2;
+            let DYDT = 3;
+            let M = 4;
+            let ID = 5;
+
             function draw() {
                 ctx.fillStyle = "black";
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-                let X = 0;
-                let Y = 1;
-                let DXDT = 2;
-                let DYDT = 3;
-                let M = 4;
-                let ID = 5;
 
                 for(let i = 0; i < bodies[ID].length; i++) {
                     let x = scale_coord_x(bodies[X][i]);
@@ -99,8 +99,12 @@
             resizeCanvas();
 
             setMessageHandler(function(ws, message) {
-                let parsed = JSON.parse(message);
-                bodies = parsed.bodies;
+                bodies[X] = new Float64Array(message, Float64Array.BYTES_PER_ELEMENT*200*X, 200);
+                bodies[Y] = new Float64Array(message, Float64Array.BYTES_PER_ELEMENT*200*Y, 200);
+                bodies[DXDT] = new Float64Array(message, Float64Array.BYTES_PER_ELEMENT*200*DXDT, 200);
+                bodies[DYDT] = new Float64Array(message, Float64Array.BYTES_PER_ELEMENT*200*DYDT, 200);
+                bodies[M] = new Float64Array(message, Float64Array.BYTES_PER_ELEMENT*200*M, 200);
+                bodies[ID] = new Float64Array(message, Float64Array.BYTES_PER_ELEMENT*200*ID, 200);
                 //console.log('Received tick for time ' + parsed.time);
                 draw();
             });

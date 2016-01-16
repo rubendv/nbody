@@ -1,6 +1,5 @@
 from autobahn.asyncio.websocket import WebSocketServerProtocol, WebSocketServerFactory
 import logging
-import json
 import asyncio
 import time
 import numpy as np
@@ -77,12 +76,11 @@ class NBodyServerFactory(WebSocketServerFactory):
     def tick(self):
         self.eventloop.call_later(DT, self.tick)
         start = time.time()
-        message = {'time': time.time(), 'bodies': self.bodies.tolist()}
         forces = calculate_forces(self.bodies)
         self.bodies[[DXDT, DYDT]] += forces.T * DT
         self.bodies[[X, Y]] += self.bodies[[DXDT, DYDT]] * DT
 
-        self.broadcast(json.dumps(message))
+        self.broadcast(self.bodies.tobytes('C'))
         end = time.time()
         self.times.append(end-start)
         if(len(self.times) >= 1000):
@@ -103,8 +101,12 @@ class NBodyServerFactory(WebSocketServerFactory):
         self.clients.remove(client)
 
     def broadcast(self, message):
+        is_binary = isinstance(message, bytes)
+        if not is_binary:
+            message = message.encode('utf-8')
         for client in self.clients:
-            client.sendMessage(message.encode('utf-8'))
+            client.sendMessage(message, is_binary)
+
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
