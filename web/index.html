@@ -74,8 +74,16 @@
             let M = 4;
             let ID = 5;
 
+            let clear = true;
+
             function draw() {
-                ctx.fillStyle = "black";
+                if(clear) {
+                    ctx.fillStyle = "black";
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    clear = false;
+                }
+
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
                 for(let i = 0; i < bodies[ID].length; i++) {
@@ -100,12 +108,13 @@
             resizeCanvas();
 
             setMessageHandler(function(ws, message) {
-                bodies[X] = new Float64Array(message, Float64Array.BYTES_PER_ELEMENT*200*X, 200);
-                bodies[Y] = new Float64Array(message, Float64Array.BYTES_PER_ELEMENT*200*Y, 200);
-                bodies[DXDT] = new Float64Array(message, Float64Array.BYTES_PER_ELEMENT*200*DXDT, 200);
-                bodies[DYDT] = new Float64Array(message, Float64Array.BYTES_PER_ELEMENT*200*DYDT, 200);
-                bodies[M] = new Float64Array(message, Float64Array.BYTES_PER_ELEMENT*200*M, 200);
-                bodies[ID] = new Float64Array(message, Float64Array.BYTES_PER_ELEMENT*200*ID, 200);
+                let N = message.byteLength / Float64Array.BYTES_PER_ELEMENT / 6;
+                bodies[X] = new Float64Array(message, Float64Array.BYTES_PER_ELEMENT*N*X, N);
+                bodies[Y] = new Float64Array(message, Float64Array.BYTES_PER_ELEMENT*N*Y, N);
+                bodies[DXDT] = new Float64Array(message, Float64Array.BYTES_PER_ELEMENT*N*DXDT, N);
+                bodies[DYDT] = new Float64Array(message, Float64Array.BYTES_PER_ELEMENT*N*DYDT, N);
+                bodies[M] = new Float64Array(message, Float64Array.BYTES_PER_ELEMENT*N*M, N);
+                bodies[ID] = new Float64Array(message, Float64Array.BYTES_PER_ELEMENT*N*ID, N);
                 //console.log('Received tick for time ' + parsed.time);
                 draw();
             });
