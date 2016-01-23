@@ -18,7 +18,7 @@ class NBodyServerProtocol(WebSocketServerProtocol):
         self.factory.unregister(self)
 
 
-N = 200
+N = 20
 X = 0
 Y = 1
 DXDT = 2
@@ -26,7 +26,8 @@ DYDT = 3
 M = 4
 ID = 5
 DT = 60.0 ** (-1)
-G = -0.001
+G = -0.0001
+BROADCAST_DT = 24.0 ** (-1)
 
 
 @numba.jit
@@ -61,16 +62,32 @@ class NBodyServerFactory(WebSocketServerFactory):
         super(NBodyServerFactory, self).__init__(*args, **kwargs)
         self.clients = set()
         self.eventloop = eventloop
+        angles = np.random.uniform(-np.pi, np.pi, N)
+        distances = np.random.uniform(0.5, 6, N)
+        masses = 2.0**np.random.poisson(1.0, N)
+        masses[0] = 1000
+        orbital_velocities = np.sqrt(-G*masses[0]/distances)
+        distances[0] = 0
+        orbital_velocities[0] = 0
+        xs = distances * np.cos(angles)
+        ys = distances * np.sin(angles)
+        normalized_directions = np.array([-ys, xs]).T
+        normalized_directions /= np.hypot(-ys, xs)[:,None]
+        velocities = normalized_directions * orbital_velocities[:,None]
+        velocities[0] = [0, 0]
+
         self.bodies = np.array([
-            np.random.uniform(-6.0, 6.0, N), # x
-            np.random.uniform(-6.0, 6.0, N), # y
-            np.zeros(N), # np.random.normal(0.0, 0.1, N), # dx/dt
-            np.zeros(N), # np.random.normal(0.0, 0.1, N), # dy/dt
-            np.random.normal(1.0, 1.0, N), # m
-            np.arange(N) # id
+            xs,
+            ys,
+            velocities.T[X],
+            velocities.T[Y],
+            masses,
+            np.arange(N)
         ])
+
         logger.info('Starting simulation')
         self.times = []
+        self.last_broadcast = 0
         self.tick()
 
     def tick(self):
@@ -79,9 +96,12 @@ class NBodyServerFactory(WebSocketServerFactory):
         forces = calculate_forces(self.bodies)
         self.bodies[[DXDT, DYDT]] += forces.T * DT
         self.bodies[[X, Y]] += self.bodies[[DXDT, DYDT]] * DT
-
-        self.broadcast(self.bodies.tobytes('C'))
         end = time.time()
+
+        if end > self.last_broadcast + BROADCAST_DT:
+            self.broadcast(self.bodies.tobytes('C'))
+            self.last_broadcast = time.time()
+
         self.times.append(end-start)
         if(len(self.times) >= 1000):
             logger.info('Calculated {} ticks at {} ms/tick'.format(len(self.times), np.mean(self.times)*1000))
