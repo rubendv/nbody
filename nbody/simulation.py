@@ -91,7 +91,7 @@ class NBodyServerFactory(WebSocketServerFactory):
         self.tick()
 
     def tick(self):
-        self.eventloop.call_later(DT, self.tick)
+        self.eventloop.call_later(DT/4, self.tick)
         start = time.time()
         forces = calculate_forces(self.bodies)
         self.bodies[[DXDT, DYDT]] += forces.T * DT
@@ -106,12 +106,15 @@ class NBodyServerFactory(WebSocketServerFactory):
         if(len(self.times) >= 1000):
             logger.info('Calculated {} ticks at {} ms/tick'.format(len(self.times), np.mean(self.times)*1000))
             self.times = []
-            mean_x = self.bodies[X].mean()
-            mean_y = self.bodies[Y].mean()
-            if np.abs(mean_x) > 4 or np.abs(mean_y) > 4:
-                logger.info('Recentering to {}, {}'.format(mean_x, mean_y))
-                self.bodies[X] -= mean_x
-                self.bodies[Y] -= mean_y
+
+            offset_x = self.bodies[X][0]
+            offset_y = self.bodies[Y][0]
+            if np.hypot(offset_x, offset_y) > 4:
+                offset_x = self.bodies[X][0]
+                offset_y = self.bodies[Y][0]
+                logger.info('Recentering to {}, {}'.format(offset_x, offset_y))
+                self.bodies[X] -= offset_x
+                self.bodies[Y] -= offset_y
 
 
     def register(self, client):
