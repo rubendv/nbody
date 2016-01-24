@@ -3,16 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <title>N-Body</title>
+    <style>
+        #controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 200px;
+            height: 100px;
+            background-color: transparent;
+            border: 1px white;
+            color: white;
+        }
+
+        html, body {
+            margin: 0px;
+            padding: 0px;
+        }
+
+        #mainView {
+            width: 100%;
+            height: 100%;
+        }
+
+        label {
+            display: inline-block;
+            text-align: right;
+        }​
+    </style>
 </head>
 <body>
     <canvas id="mainView"></canvas>
+    <div id="controls">
+        <form>
+            <div>
+                <label>Trails</label>
+                <input type="checkbox" id="trailsCheckBox" name="Trails" checked="true" />
+            </div>
+            <div>
+                <label>Follow sun</label>
+                <input type="checkbox" id="followSunCheckBox" name="Follow sun" checked="true" />
+            </div>
+            <div>
+                <label>Scale</label>
+                <input type="range" id="scaleRange" name="Scale" min="32" max="1" value="8" onchange="scale = document.activeElement.value" />
+            </div>
+            <div>
+                <label>Websocket URL</label>
+                <input type="text" id="urlField" name="Websocket URL" value="wss://rubendv.be/nbody-ws" onkeypress="return urlFieldKeyPressed(event)" />
+            </div>
+        </form>
+    </div>
     <script>
         "use strict";
 
         var bodies = [[], [], [], [], [], []];
 
-        function setMessageHandler(onmessage) {
-            var ws = new WebSocket("wss://rubendv.be/nbody-ws", []);
+        var wsURL = "wss://rubendv.be/nbody-ws";
+        var ws = new WebSocket(wsURL, []);
+
+        function urlFieldKeyPressed(event) {
+            if(event.keyCode === 13) {
+                wsURL = document.getElementById("urlField").value;
+                ws.close();
+                return false;
+            }
+        }
+
+        function setMessageHandler(ws, onmessage) {
             ws.binaryType = 'arraybuffer';
             ws.onopen = function(event) {
                 console.log("Websocket connected");
@@ -25,11 +82,14 @@
             };
             ws.onclose = function(event) {
                 console.log("Websocket disconnected");
-                setTimeout(function() { setMessageHandler(onmessage); }, 1000);
+                setTimeout(function() {
+                    ws = new WebSocket(wsURL, []);
+                    setMessageHandler(ws, onmessage);
+                }, 1000);
             };
         }
 
-
+        var scale = 8;
 
         (function(bodies) {
             let canvas = document.getElementById("mainView");
@@ -38,11 +98,11 @@
             window.addEventListener("resize", resizeCanvas, false);
 
             function scale_coord_x(x) {
-                return window.innerHeight / 2 * x / 8 + window.innerWidth / 2;
+                return window.innerHeight / 2 * x / scale + window.innerWidth / 2;
             }
 
             function scale_coord_y(y) {
-                return window.innerHeight / 2 * y / 8 + window.innerHeight / 2;
+                return window.innerHeight / 2 * y / scale + window.innerHeight / 2;
             }
 
 
@@ -75,20 +135,33 @@
             let ID = 5;
 
             let clear = true;
+            let offset_x = 0;
+            let offset_y = 0;
 
             function draw() {
-                if(clear) {
-                    ctx.fillStyle = "black";
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    clear = false;
+                let trails = document.getElementById("trailsCheckBox").checked;
+                let followSun = document.getElementById("followSunCheckBox").checked;
+
+                if(followSun) {
+                    offset_x = bodies[X][0];
+                    offset_y = bodies[Y][0];
                 }
 
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.01)';
+                if(clear || !trails) {
+                    ctx.fillStyle = "black";
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+
+
+                    clear = !trails;
+                }
+
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
                 for(let i = 0; i < bodies[ID].length; i++) {
-                    let x = scale_coord_x(bodies[X][i]);
-                    let y = scale_coord_y(bodies[Y][i]);
+                    let x = scale_coord_x(bodies[X][i] - offset_x);
+                    let y = scale_coord_y(bodies[Y][i] - offset_y);
                     ctx.fillStyle = rainbow(bodies.length, bodies[ID][i]);
                     let size = Math.pow(bodies[M][i], 1 / 3) * 2;
                     ctx.beginPath();
@@ -102,12 +175,14 @@
                 canvas.width = window.innerWidth;
                 canvas.height = window.innerHeight;
 
+                clear = true;
+
                 draw();
             }
 
             resizeCanvas();
 
-            setMessageHandler(function(ws, message) {
+            setMessageHandler(ws, function(ws, message) {
                 let N = message.byteLength / Float64Array.BYTES_PER_ELEMENT / 6;
                 bodies[X] = new Float64Array(message, Float64Array.BYTES_PER_ELEMENT*N*X, N);
                 bodies[Y] = new Float64Array(message, Float64Array.BYTES_PER_ELEMENT*N*Y, N);

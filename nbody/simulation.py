@@ -109,7 +109,7 @@ class NBodyServerFactory(WebSocketServerFactory):
 
             offset_x = self.bodies[X][0]
             offset_y = self.bodies[Y][0]
-            if np.hypot(offset_x, offset_y) > 4:
+            if np.hypot(offset_x, offset_y) > 1e3:
                 offset_x = self.bodies[X][0]
                 offset_y = self.bodies[Y][0]
                 logger.info('Recentering to {}, {}'.format(offset_x, offset_y))
